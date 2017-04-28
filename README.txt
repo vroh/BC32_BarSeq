@@ -1,4 +1,5 @@
 This is the final protocol for BC32 barcode analysis. See details in Roh et al. (2017).
+Files in toy_data folder can be used to test the scripts.
 
 1. Prepare a table for your samples
 ===================================
