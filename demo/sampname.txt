@@ -1,0 +1,2 @@
+m248	BC1_L1_R1.fastq.gz	ATCACG
+m248R	BC2_L1_R1.fastq.gz	CGATGT
