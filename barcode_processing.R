@@ -1,6 +1,6 @@
 ##################################################
 #                                                #
-#          Barcode Processing v.0.2              #
+#          Barcode Processing v.0.3              #
 #                                                #
 #               Roh et al. 2017                  #
 #                                                #
@@ -17,8 +17,14 @@ library(Biostrings)
 library(dplyr)
 library(stringdist)
 
-# Define the matching pattern (BC32)
-pat <- 'CTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNN'
+# For indels, an updated version of Biostrings' vmatchPattern is required (described in functions.R)
+source('functions.R')
+
+# Define variables
+pat <- 'CTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNN' # matching pattern (BC32)
+bb_mis <- 1 # number of mismatch allowed in barcode backbone sequence
+indels <- 0 # total edit distance resulting from indels that are tolerated for barcode matching (barcodes with indels increase computation time)
+threshold <- 3 # threshold for Hamming distance in step pooling similar sequences
 
 # Collect info from user
 sampname <- read.delim('sampname.txt', # sampname provides a list of sample names, matching sequencing files and multiplexing index
@@ -50,15 +56,30 @@ for (i in 1:length(seqfiles)) {
   sequences <- sequences[as.data.frame(idx_match)[,1]]
   mis_idx_percent <- (init_len/length(sequences) - 1)*100
 
-  # Grab barcode sequences (allowing for 1 mismatch in the barcode backbone)
-  # Match pattern
-  match <- vmatchPattern(pat, sequences, 33)
+  # Grab barcode sequences
+  # Trim 5' sequences
+  sequences <- narrow(sequences, 1, 90)
+  # Match pattern without accounting for indels
+  match <- vmatchPattern(pat, sequences, length(strsplit(pat, 'N')[[1]]) + bb_mis)
   # Subset
   sequences_sub <- sequences[as.data.frame(match)[,1]]
-  # Extract barcode sequences from subset
-  match <- vmatchPattern(pat, sequences_sub, 33)
+  left_out <- sequences[-as.data.frame(match)[,1]]
+  # Extract barcode sequences from sequences subset
+  match <- vmatchPattern(pat, sequences_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis)
   barcodes <- sequences_sub[match]
-  
+  if (indels) {
+    # Remove sequences that will be matched by substitutions instead of indels (the total edit distance in vmatchPattern2 depends both on substitution and indels)
+    substitution <- vmatchPattern(pat, left_out, max.mismatch = length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, min.mismatch = length(strsplit(pat, 'N')[[1]]) + bb_mis + indels) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
+    left_out <- left_out[-as.data.frame(substitution)[,1]]
+    # Match pattern with remaining sequences, now accounting for indels
+    match <- vmatchPattern2(pat, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
+    # Subset
+    indels_sub <- left_out[as.data.frame(match)[,1]]
+    # Extract barcode sequences with indels
+    match <- vmatchPattern2(pat, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
+    barcodes <- c(barcodes, indels_sub[match])
+  }
+
   # Discard sequences with 'N' calls
   barcodes <- barcodes[!grepl('N', barcodes)]
   
@@ -75,10 +96,6 @@ for (i in 1:length(seqfiles)) {
   #####################################################################
   
   message(paste('Pooling sample: ', name))
-  
-  # Set threshold for Hamming distance (default: 3 mismatches)
-  threshold <- 3
-    
   barcodes_summary$seq <- as.character(barcodes_summary$seq)
   
   step <- 1
@@ -118,7 +135,7 @@ for (i in 1:length(summaries)) {
 merged <- NULL
 current <- data.list[1]
 for (i in 2:length(summaries)){
-  merged <- merge(current, data.list[i], by = 'seq', all = T) # set 'all' to FALSE if you want to only keep barcodes present in all samples
+  merged <- merge(current, data.list[i], by = 'seq', all = T)
   current <- merged
 }
 colnames(merged) <- c('seq', as.character(strsplit(list.files()[grep('summary_pooled.txt', list.files())], '_barcode_summary_pooled.txt')))

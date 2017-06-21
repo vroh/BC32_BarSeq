@@ -1,0 +1,13 @@
+BC32 barcode processing changelog
+=================================
+
+28.04.2017 version 0.2
+----------------------
+
+- initial Git commit (this is the version used in Roh et al. paper)
+
+
+21.06.2017 version 0.3
+----------------------
+
+- added code to take indels into account when matching the barcode pattern
