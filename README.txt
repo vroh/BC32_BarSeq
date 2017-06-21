@@ -1,5 +1,4 @@
 This is the final protocol for BC32 barcode analysis. See details in Roh et al. (2017).
-Files in toy_data folder can be used to test the scripts.
 
 1. Prepare a table for your samples
 ===================================
@@ -23,9 +22,10 @@ Guide:
 Select which samples you want to explore
 Switch between barcode distribution and topclones graphs using the tab above the plot
 Distribution mode:
-    Adjust the minimum number of reads required to include a bacorde in the graph
+    Adjust the minimum number of reads required to include a barcode in the graph
     Use the checkbox to switch between pooled or faceted graph
 TopClones mode:
     Adjust the rank down to which barcodes are displayed (default: top 5)
+Click 'Save Plot' to save the current plot to the working directory
 
 See barcode_explorer.R for details.

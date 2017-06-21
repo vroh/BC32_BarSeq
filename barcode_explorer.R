@@ -59,8 +59,10 @@ ui <- shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel('Distribution', plotOutput('distPlot')),
-        tabPanel('TopClones', plotOutput('topPlot'))
-        )      
+        tabPanel('TopClones', plotOutput('topPlot')),
+        id = 'tabs'
+        ),
+      actionButton('savePlot', 'Save Plot')
     )
   )
 ))
@@ -122,6 +124,18 @@ server <- shinyServer(function(input, output) {
       scale_fill_discrete(guide = F)    
    
   })
+  
+  observeEvent(input$savePlot,
+    ggsave(
+      paste0(
+        paste(input$tabs,
+              paste(input$samples, sep = "", collapse = "_"),
+              input$threshold,
+              input$rank,
+              input$pool,
+              sep = "_"),
+        '.png'))
+  )
 })
 
 
