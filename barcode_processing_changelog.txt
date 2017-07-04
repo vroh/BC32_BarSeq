@@ -4,10 +4,16 @@ BC32 barcode processing changelog
 28.04.2017 version 0.2
 ----------------------
 
-- initial Git commit (this is the version used in Roh et al. paper)
+- initial Git commit
 
 
 21.06.2017 version 0.3
 ----------------------
 
 - added code to take indels into account when matching the barcode pattern
+
+04.07.2017 version 0.4
+----------------------
+
+- added code to output additional quality control tables and plots for quicker QC checks
+- added base_q variable: a quality score filtering variable (removes reads with average quality score falling below base_q)
