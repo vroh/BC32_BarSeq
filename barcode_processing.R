@@ -88,6 +88,7 @@ for (i in 1:length(seqfiles)) {
     match_with_indels <- length(indels_sub) # collect for QC_stats
     # Extract barcode sequences with indels
     match <- vmatchPattern2(pat, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
+    match <- lapply(match, function(x) IRanges(start(x), end(x)+2)) # extend match by 2 nucleotides (to report full barcode sequence)
     barcodes <- c(barcodes, indels_sub[match])
   }
 
