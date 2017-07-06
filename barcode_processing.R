@@ -26,7 +26,7 @@ source('functions.R')
 pat <- 'CTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNN' # matching pattern (BC32)
 base_q <- 0 # minimum average base quality score in first 90 nucleotides
 bb_mis <- 1 # number of mismatch allowed in barcode backbone sequence
-indels <- 0 # total edit distance resulting from indels that are tolerated for barcode matching (barcodes with indels increase computation time)
+indels <- 0 # total edit distance resulting from indels that are tolerated for barcode matching (try to keep this low)
 threshold <- 3 # threshold for Hamming distance in step pooling similar sequences
 
 # Collect info from user
@@ -78,18 +78,20 @@ for (i in 1:length(seqfiles)) {
   barcodes <- sequences_sub[match]
   match_with_indels <- 'sample processed without indel matching'
   if (indels) {
-    # Remove sequences that will be matched by substitutions instead of indels (the total edit distance in vmatchPattern2 depends both on substitution and indels)
-    substitution <- vmatchPattern(pat, left_out, max.mismatch = length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, min.mismatch = length(strsplit(pat, 'N')[[1]]) + bb_mis + indels) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
+    pat_indels <- paste0(pat, 'CTCGAG') # include 'CTCGAG' in the matching pattern
+    # Remove sequences that will be matched by additional substitutions instead of indels (the total edit distance in vmatchPattern2 depends both on substitution and indels)
+    substitution <- vmatchPattern(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
     left_out <- left_out[-as.data.frame(substitution)[,1]]
     # Match pattern with remaining sequences, now accounting for indels
-    match <- vmatchPattern2(pat, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
-    # Subset
-    indels_sub <- left_out[as.data.frame(match)[,1]]
-    match_with_indels <- length(indels_sub) # collect for QC_stats
+    match <- vmatchPattern2(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
+    # Subset and remove sequences with too long edit distance
+    indels_sub <- left_out[as.data.frame(match)[as.data.frame(match)[,5] >= nchar(pat_indels)-1,][,1]]
     # Extract barcode sequences with indels
-    match <- vmatchPattern2(pat, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
-    match <- lapply(match, function(x) IRanges(start(x), end(x)+2)) # extend match by 2 nucleotides (to report full barcode sequence)
-    barcodes <- c(barcodes, indels_sub[match])
+    match <- vmatchPattern2(pat_indels, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
+    indels_sub <- indels_sub[match]
+    indels_sub <- trimLRPatterns(Rpattern = 'CTCGAG', subject = indels_sub, max.Rmismatch = indels, with.Rindels = T) # trim CTCGAG pattern
+    match_with_indels <- length(indels_sub) # collect for QC_stats
+    barcodes <- c(barcodes, indels_sub)
   }
 
   # Discard sequences with 'N' calls
