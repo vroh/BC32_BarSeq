@@ -81,11 +81,13 @@ for (i in 1:length(seqfiles)) {
     pat_indels <- paste0(pat, 'CTCGAG') # include 'CTCGAG' in the matching pattern
     # Remove sequences that will be matched by additional substitutions instead of indels (the total edit distance in vmatchPattern2 depends both on substitution and indels)
     substitution <- vmatchPattern(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
-    left_out <- left_out[-as.data.frame(substitution)[,1]]
+    if (length(as.data.frame(substitution)[,1]) > 0) {
+      left_out <-  left_out[-as.data.frame(substitution)[,1]]
+    }
     # Match pattern with remaining sequences, now accounting for indels
     match <- vmatchPattern2(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
     # Subset and remove sequences with too long edit distance
-    indels_sub <- left_out[as.data.frame(match)[as.data.frame(match)[,5] >= nchar(pat_indels)-1,][,1]]
+    indels_sub <- left_out[as.data.frame(match)[as.data.frame(match)[,5] >= nchar(pat_indels) - indels,][,1]]
     # Extract barcode sequences with indels
     match <- vmatchPattern2(pat_indels, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
     indels_sub <- indels_sub[match]
