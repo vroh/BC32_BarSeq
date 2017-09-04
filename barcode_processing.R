@@ -18,16 +18,18 @@ library(dplyr)
 library(stringdist)
 library(ggplot2)
 library(gridExtra)
+library(msa)
 
 # For indels, an updated version of Biostrings' vmatchPattern is required (described in functions.R)
 source('functions.R')
 
 # Define variables
 pat <- 'CTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNN' # matching pattern (BC32)
-base_q <- 0 # minimum average base quality score in first 90 nucleotides
+idx_mis <- 1 # number of mismatch allowed in index
+base_q <- 20 # minimum average base quality score in first 90 nucleotides
 bb_mis <- 1 # number of mismatch allowed in barcode backbone sequence
-indels <- 0 # total edit distance resulting from indels that are tolerated for barcode matching (try to keep this low)
-threshold <- 3 # threshold for Hamming distance in step pooling similar sequences
+indels <- 1 # total edit distance resulting from indels that are tolerated for barcode matching (try to keep this low)
+threshold <- 12 # threshold for Hamming distance in step pooling similar sequences
 
 # Collect info from user
 sampname <- read.delim('sampname.txt', # sampname provides a list of sample names, matching sequencing files and multiplexing index
@@ -58,9 +60,10 @@ for (i in 1:length(seqfiles)) {
   # Filter for sequences with specific multiplexing index (only keep sequences with the correct index, beware of 6 and 8-mer indexes!)
   # This steps avoids misassignment of samples at de-multiplexing 
   idx <- paste0('GTCAC', sampname$index[i], 'ATCTC')
-  # Index matching (strict!)
-  idx_match <- vmatchPattern(idx, sequences, 0)
+  # Index matching
+  idx_match <- vmatchPattern(idx, sequences, idx_mis)
   # Subset sequences
+  no_index_seq <- sequences[-as.data.frame(idx_match)[,1]] # keep sequences failing index matching
   sequences <- sequences[as.data.frame(idx_match)[,1]]
   correct_index <- length(sequences) # collect for QC_stats
 
@@ -68,7 +71,7 @@ for (i in 1:length(seqfiles)) {
   # Trim 5' sequences
   sequences <- narrow(sequences, 1, 90)
   # Match pattern without accounting for indels
-  match <- vmatchPattern(pat, sequences, length(strsplit(pat, 'N')[[1]]) + bb_mis)
+  match <- vmatchPattern(pat, sequences, length(strsplit(pat, 'N')[[1]]) + bb_mis) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
   # Subset
   sequences_sub <- sequences[as.data.frame(match)[,1]]
   match_no_indels <- length(sequences_sub) # collect for QC_stats
@@ -80,14 +83,16 @@ for (i in 1:length(seqfiles)) {
   if (indels) {
     pat_indels <- paste0(pat, 'CTCGAG') # include 'CTCGAG' in the matching pattern
     # Remove sequences that will be matched by additional substitutions instead of indels (the total edit distance in vmatchPattern2 depends both on substitution and indels)
-    substitution <- vmatchPattern(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels) # length(strsplit(pat, 'N')[[1]]) returns the count of N in the barcode sequence (32)
+    substitution <- vmatchPattern(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels)
     if (length(as.data.frame(substitution)[,1]) > 0) {
       left_out <-  left_out[-as.data.frame(substitution)[,1]]
     }
     # Match pattern with remaining sequences, now accounting for indels
     match <- vmatchPattern2(pat_indels, left_out, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
     # Subset and remove sequences with too long edit distance
-    indels_sub <- left_out[as.data.frame(match)[as.data.frame(match)[,5] >= nchar(pat_indels) - indels,][,1]]
+    to_include <- as.data.frame(match)[as.data.frame(match)[,5] >= nchar(pat_indels) - indels,][,1]
+    indels_sub <- left_out[to_include]
+    left_out <- left_out[-to_include]
     # Extract barcode sequences with indels
     match <- vmatchPattern2(pat_indels, indels_sub, length(strsplit(pat, 'N')[[1]]) + bb_mis + indels, with.indels = T)
     indels_sub <- indels_sub[match]
@@ -102,7 +107,7 @@ for (i in 1:length(seqfiles)) {
   # Generate count summary
   barcodes <- as.data.frame(barcodes)
   names(barcodes) <- 'seq'
-  barcodes_summary <- count(barcodes, seq, sort=T)
+  barcodes_summary <- dplyr::count(barcodes, seq, sort=T)
   
   # Write summary file and QC_stats report
   write.table(barcodes_summary, paste0(name, '_barcode_summary.txt'), sep='\t', row.names = F)
@@ -155,16 +160,33 @@ for (i in 1:length(seqfiles)) {
   grid.arrange(plotA, plotB, nrow = 1)
   dev.off()
   
+  # Export the top-10 reads not matching index or barcode to investigate causes (also print out alignment for help)
+  
+  no_index_seq <- as.data.frame(head(dplyr::count(as.data.frame(no_index_seq), x, sort=T), n = 10))
+  aln <- NULL
+  for (i in 1:nrow(no_index_seq)){
+    aln <- c(aln, msa(c(idx, no_index_seq[i,1]), method = 'ClustalOmega', type = 'dna'))
+  }
+  write.table(c(capture.output(no_index_seq), capture.output(aln)), paste0(name, '_no_index.txt'), sep = '\t', row.names = F, col.names = F, quote = F)
+  
+  no_bc_match <- as.data.frame(head(dplyr::count(as.data.frame(left_out), x, sort=T), n = 10))
+  aln <- NULL
+  for (i in 1:nrow(no_bc_match)){
+    aln <- c(aln, msa(c(pat, no_bc_match[i,1]), method = 'ClustalOmega', type = 'dna'))
+  }
+  write.table(c(capture.output(no_bc_match), capture.output(aln)), paste0(name, '_no_bc_match.txt'), sep = '\t', row.names = F, col.names = F, quote = F)
+  
+  
   # 1.b. Pool similar barcodes together (according to Hamming distance)
   #####################################################################
-  
+
   message(paste('Pooling sample: ', name))
   barcodes_summary$seq <- as.character(barcodes_summary$seq)
-  
+
   step <- 1
   while(step < (nrow(barcodes_summary))) {
     d <- stringdist(barcodes_summary$seq[step], barcodes_summary$seq[(step+1):length(barcodes_summary$seq)]) # calculate distance from top clone compared to the rest
-    pool <- barcodes_summary[(step+1):length(barcodes_summary$seq),][d <= threshold,] # pool barcodes 
+    pool <- barcodes_summary[(step+1):length(barcodes_summary$seq),][d <= threshold,] # pool barcodes
     barcodes_summary$n[step] <- barcodes_summary$n[step] + sum(pool$n) # update counts
     to_remove <- c((step+1):length(barcodes_summary$seq))[d <= threshold] # remove pooled barcodes from this step
     if(length(to_remove > 0)) {
@@ -172,10 +194,10 @@ for (i in 1:length(seqfiles)) {
     }
     step <- step + 1 # go to next line
   }
-  
+
   # Sort summary table
   barcodes_summary <- arrange(barcodes_summary, desc(n))
-  
+
   # Write summary file for pooled barcodes
   write.table(barcodes_summary, paste0(name, '_barcode_summary_pooled.txt'), sep='\t', row.names = F)
   message(paste('Finished sample: ', name))
