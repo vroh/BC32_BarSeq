@@ -1,0 +1,16 @@
+Package: BC32BarSeq
+Type: Package
+Title: Set of functions to process and analyze a BC32 sequencing run
+Version: 0.5.0
+Author: Vincent Roh
+Maintainer: Vincent Roh <roh.vincent@gmail.com>
+Description: This package processes a BC32 sequencing run
+    Generate summaries of BC32 barcode counts
+    Outputs quality control plots
+    Includes a shiny app for the exploration of results
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
+Suggests: knitr, rmarkdown, ShortRead, Biostrings, dplyr, stringdist, ggplot2, gridExtra, msa, shiny, reshape
+VignetteBuilder: knitr

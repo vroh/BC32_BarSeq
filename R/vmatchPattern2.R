@@ -1,7 +1,26 @@
-### Helping functions for Barcode Processing script ###
+#' String searching function.
+#'
+#' A functions for finding all the occurrences (aka "matches" or "hits") of a given pattern (typically
+#' short) in a (typically long) reference sequence or set of reference sequences (aka the subject).
+#' This is an updated version of vmatchPattern that take indels into account.
+#' Provided by Herv√© Pag√®s on https://support.bioconductor.org/p/58350/
+#' @param pattern The pattern string.
+#' @param subject The String object for matching.
+#' @param max.mismatch,min.mismatch The minimum and maximum number of mismatching letters allowed.
+#' @param with.indels If TRUE then indels are allowed.
+#' @param fixed If TRUE (the default), an IUPAC ambiguity code in the pattern can only match
+#' the same code in the subject, and vice versa.
+#' @param algorithm One of the following: "auto", "naive-exact", "naive-inexact", "boyer-moore",
+#' "shift-or" or "indels".
+#' @param ... Additional arguments for methods.
+#' @details See vmatchPattern for details.
+#' @keywords pattern matching
+#' @export
+#' @examples
+#' x <- DNAString("AAGCGCGATATG")
+#' m1 <- matchPattern("GCNNNAT", x)
+#' m1
 
-# Below is an updated version of vmatchPattern that take indels into account
-# Provided by HervÈ PagËs on https://support.bioconductor.org/p/58350/
 vmatchPattern2 <- function(pattern, subject,
                            max.mismatch=0, min.mismatch=0,
                            with.indels=FALSE, fixed=TRUE,

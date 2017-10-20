@@ -1,0 +1,140 @@
+---
+title: "BC32BarSeq Vignette"
+author: "Vincent Roh"
+date: "20 Oct 2017"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BC32BarSeq Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is the instruction vignette for the package BC32BarSeq. It is designed to help analyze BarSeq sequencing runs, specifically with the BC32 system. The set of functions provided in this package depends on the following R packages, so make sure they are installed:
+
+* ShortRead
+* Biostrings
+* dplyr
+* stringdist
+* ggplot2
+* gridExtra
+* msa
+* shiny
+* reshape
+
+Load the BC32BarSeq package:
+
+```{r, eval=FALSE}
+library(BC32BarSeq)
+```
+
+Load all other packages at once with the function:
+
+```{r, eval=FALSE}
+initBC()
+```
+
+1. Parameter Settings
+---------------------
+
+Define your variables:
+
+```{r, eval=FALSE}
+pat <- 'CTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNNCTTNNCGANNCTANNCTTNNGGANNCTANNCAGNN' # matching pattern (BC32)
+restriction <- 'CTCGAG' # The restriction sequence flanking the barcode pattern at the 3'end
+idx_mis <- 1 # number of mismatch allowed in index
+base_q <- 20 # minimum average base quality score in first 90 nucleotides
+bb_mis <- 1 # number of mismatch allowed in barcode backbone sequence
+indels <- 1 # total edit distance resulting from indels that are tolerated for barcode matching (try to keep this low)
+dl <- 12 # threshold for Damerau-Levenshtein distance in step pooling similar sequences
+min.count <- 10 # in the final merged table, replace barcodes with occurence below min.count (considered as noise) with 0
+```
+
+Next, you need to prepare a data frame containing minimal information about the data to be analyzed. In this Vignette an example is provided through a textfile named 'sampname.txt' in which each row of the file contains 3 tab-separated columns indicating the sample names, paths of the corresponding sequencing fastq file and the sequences of the corresponding multiplexing index.
+
+```{r, eval=FALSE}
+sampname <- read.delim('sampname.txt', # sampname provides a list of sample names, matching sequencing files and multiplexing index
+                       header = F,
+                       stringsAsFactor = F)
+colnames(sampname) <- c('sample', 'file', 'index')
+```
+
+2.Generate summaries for each sample
+------------------------------------
+
+```{r, eval=FALSE}
+bc_data <- generateSummaries(pat = pat,
+                             restriction = restriction,
+                             sampname = sampname,
+                             base_q = base_q,
+                             idx_mis = idx_mis,
+                             bb_mis = bb_mis,
+                             indels = indels)
+```
+
+This function call will generate (in the working directory) a table of raw counts for each sample, and a series of additional graphs and tables for quality control. The top ten sequences failing the index or barcode matching are listed in the textfiles containing the suffixes "_no_index" or "_no_bc_match" respectively. These files also show the alignment of the sequences with the index (respectively barcode pattern) to easily identify why it didn't match.
+
+3. Add invited sequences
+------------------------
+
+After careful QC review, you can provide a list of sequences that you think deserve to be included in the analysis (identified in the "_no_index" and "_no_bc_match" files).
+invited_idx contains sequences that failed the index matching but you believe are worthy to be included in the analysis (let's say if the index did not match because of one substitution), this dataframe contains 2 columns, with the sequence in the first column and the sample name in the second column.
+invided_bc contains sequences that failed the barcode matching (for example because of a big deletion), in the form of a vector (or in a data frame with one column).
+Be careful, this step directly modifies the raw table of counts, so make sure you only run it once!
+
+```{r, eval=FALSE}
+invited_idx <- read.delim('invited_idx.txt', header = F, stringsAsFactor = F) # format: column 1 -> sequences, column 2 -> sample name
+invited_bc <- read.delim('invited_bc.txt', header = F, stringsAsFactor = F) # format: column 1 -> sequences
+
+addInvitedSeq(pat = pat,
+              bc_data = bc_data,
+              dir = getwd(),
+              invited_idx = invited_idx,
+              invited_bc = invited_bc)
+```
+
+4. Pool similar barcodes together (according to Damerau-Levenshtein distance)
+-----------------------------------------------------------------------------
+
+This function will generate a new table of counts, where similar sequences are pooled together under one unique barcode sequence.
+
+```{r, eval=FALSE}
+poolBC(sampname = sampname,
+        dir = getwd(),
+        dl = dl)
+```
+
+5. Merge data
+-------------
+
+In this last step, all samples are merged together into one table to facilitate the analysis.
+
+```{r, eval=FALSE}
+counts <- mergeSummaries(sampname = sampname,
+                         dir = getwd(),
+                         min.count = min.count)
+
+freq <- countsToFreq(counts = counts)
+
+cpm <- countsToCPM(counts = counts)
+
+write.table(counts, 'merged_summary_pooled_count.txt', sep='\t', row.names = F)
+write.table(freq, 'merged_summary_pooled_freq.txt', sep='\t', row.names = F)
+write.table(cpm, 'merged_summary_pooled_cpm.txt', sep='\t', row.names = F)
+
+# export session info for reproducibility
+writeLines(capture.output(sessionInfo()), 'sessionInfo.txt')
+```
+
+6. Explore data
+---------------
+
+This function starts a shiny app to explore the table of counts and frequencies generated in the previous step.
+
+```{r, eval=FALSE}
+exploreBC(getwd())
+```
+
