@@ -73,6 +73,8 @@ bc_data <- generateSummaries(pat = pat,
                              idx_mis = idx_mis,
                              bb_mis = bb_mis,
                              indels = indels)
+
+save(bc_data, 'bc_data.Rdata) # Keep this object, it is required for downstream processing!
 ```
 
 This function call will generate (in the working directory) a table of raw counts for each sample, and a series of additional graphs and tables for quality control. The top ten sequences failing the index or barcode matching are listed in the textfiles containing the suffixes "_no_index" or "_no_bc_match" respectively. These files also show the alignment of the sequences with the index (respectively barcode pattern) to easily identify why it didn't match.

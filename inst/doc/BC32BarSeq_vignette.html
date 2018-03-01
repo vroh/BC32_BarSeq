@@ -115,7 +115,9 @@ min.count &lt;-<span class="st"> </span><span class="dv">10</span> <span class="
                              <span class="dt">base_q =</span> base_q,
                              <span class="dt">idx_mis =</span> idx_mis,
                              <span class="dt">bb_mis =</span> bb_mis,
-                             <span class="dt">indels =</span> indels)</code></pre></div>
+                             <span class="dt">indels =</span> indels)
+
+<span class="kw">save</span>(bc_data, <span class="st">'bc_data.Rdata) # Keep this object, it is required for downstream processing!</span></code></pre></div>
 <p>This function call will generate (in the working directory) a table of raw counts for each sample, and a series of additional graphs and tables for quality control. The top ten sequences failing the index or barcode matching are listed in the textfiles containing the suffixes “_no_index&quot; or “_no_bc_match&quot; respectively. These files also show the alignment of the sequences with the index (respectively barcode pattern) to easily identify why it didn’t match.</p>
 </div>
 <div id="add-invited-sequences" class="section level2">

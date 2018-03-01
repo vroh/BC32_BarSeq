@@ -31,6 +31,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #                               idx_mis = idx_mis,
 #                               bb_mis = bb_mis,
 #                               indels = indels)
+#  
+#  save(bc_data, 'bc_data.Rdata) # Keep this object, it is required for downstream processing!
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  invited_idx <- read.delim('invited_idx.txt', header = F, stringsAsFactor = F) # format: column 1 -> sequences, column 2 -> sample name
