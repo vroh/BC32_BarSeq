@@ -1,4 +1,4 @@
-This is a package for BC32 barcode analysis. See details in Roh et al. , Cell Reports 2018, 25:1-15.
+This is a package for BC32 barcode analysis. See details in Roh et al. , Cell Reports 2018, 25(8): P2208-2222.
 Below is a brief description of the analysis pipeline.
 
 1. Prepare a table for your samples
