@@ -4,8 +4,15 @@
 \alias{generateSummaries}
 \title{A function to generate summaries from BC32 fastq files.}
 \usage{
-generateSummaries(pat, restriction, sampname, base_q = 20, idx_mis = 1,
-  bb_mis = 1, indels = 1)
+generateSummaries(
+  pat,
+  restriction,
+  sampname,
+  base_q = 20,
+  idx_mis = 1,
+  bb_mis = 1,
+  indels = 1
+)
 }
 \arguments{
 \item{pat}{The barcode backbone pattern for matching.}

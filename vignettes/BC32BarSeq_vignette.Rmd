@@ -117,7 +117,8 @@ In this last step, all samples are merged together into one table to facilitate 
 ```{r, eval=FALSE}
 counts <- mergeSummaries(sampname = sampname,
                          dir = getwd(),
-                         min.count = min.count)
+                         min.count = min.count,
+                         cleancol = F)
 
 freq <- countsToFreq(counts = counts)
 

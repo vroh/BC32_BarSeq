@@ -4,8 +4,15 @@
 \alias{vmatchPattern2}
 \title{String searching function.}
 \usage{
-vmatchPattern2(pattern, subject, max.mismatch = 0, min.mismatch = 0,
-  with.indels = FALSE, fixed = TRUE, algorithm = "auto")
+vmatchPattern2(
+  pattern,
+  subject,
+  max.mismatch = 0,
+  min.mismatch = 0,
+  with.indels = FALSE,
+  fixed = TRUE,
+  algorithm = "auto"
+)
 }
 \arguments{
 \item{pattern}{The pattern string.}

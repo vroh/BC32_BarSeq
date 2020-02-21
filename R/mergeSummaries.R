@@ -4,6 +4,7 @@
 #' process, its file name and the expected multiplex index sequence.
 #' @param dir The directory containing the summaries.
 #' @param min.count Counts below this number are replaced by zero (considered as noise). Defaults to 10.
+#' @param cleancol If true, columns that contain only zeros will be removed. Defaults to F.
 #' @details This function merge all count summaries in the sampname table together in one data frame. Counts below
 #' min.count are replaced by zeros.
 #' @keywords BC32 processing update merge
@@ -11,11 +12,13 @@
 #' @examples
 #' counts <- mergeSummaries(sampname,
 #'                          getwd(),
-#'                          10)
+#'                          10,
+#'                          F)
 
 mergeSummaries <- function(sampname,
                            dir,
-                           min.count = 10) {
+                           min.count = 10,
+                           cleancol = F) {
 
   # Load data summaries
   summaries <- paste0(dir, '/', sampname$sample, '_barcode_summary_pooled.txt')
@@ -39,6 +42,11 @@ mergeSummaries <- function(sampname,
   # Replace counts below threshold by 0 (remove noise)
   for (i in 2:length(merged)) {
     merged[merged[,i] < min.count, i] <- 0
+  }
+
+  # Remove columns that only contain zeros
+  if(cleancol) {
+    merged <- merged[, c(T, as.logical(apply(merged[2:length(merged)], 2, sum) != 0))]
   }
 
   # Return merged table for counts

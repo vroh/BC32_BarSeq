@@ -4,7 +4,7 @@
 \alias{mergeSummaries}
 \title{A function to merge multiple count summaries into one table.}
 \usage{
-mergeSummaries(sampname, dir, min.count = 10)
+mergeSummaries(sampname, dir, min.count = 10, cleancol = F)
 }
 \arguments{
 \item{sampname}{A data frame with 3 columns containing the name of each sample to
@@ -13,6 +13,8 @@ process, its file name and the expected multiplex index sequence.}
 \item{dir}{The directory containing the summaries.}
 
 \item{min.count}{Counts below this number are replaced by zero (considered as noise). Defaults to 10.}
+
+\item{cleancol}{If true, columns that contain only zeros will be removed. Defaults to F.}
 }
 \description{
 A function to merge multiple count summaries into one table.
@@ -24,7 +26,8 @@ min.count are replaced by zeros.
 \examples{
 counts <- mergeSummaries(sampname,
                          getwd(),
-                         10)
+                         10,
+                         F)
 }
 \keyword{BC32}
 \keyword{merge}
