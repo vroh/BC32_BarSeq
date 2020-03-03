@@ -142,7 +142,7 @@ min.count &lt;-<span class="st"> </span><span class="dv">10</span> <span class="
                              <span class="dt">bb_mis =</span> bb_mis,
                              <span class="dt">indels =</span> indels)
 
-<span class="kw">save</span>(bc_data, <span class="st">'bc_data.Rdata) # Keep this object, it is required for downstream processing!</span></code></pre></div>
+<span class="kw">save</span>(bc_data, <span class="st">'bc_data.Rdata'</span>) <span class="co"># Keep this object, it is required for downstream processing!</span></code></pre></div>
 <p>This function call will generate (in the working directory) a table of raw counts for each sample, and a series of additional graphs and tables for quality control. The top ten sequences failing the index or barcode matching are listed in the textfiles containing the suffixes “_no_index&quot; or “_no_bc_match&quot; respectively. These files also show the alignment of the sequences with the index (respectively barcode pattern) to easily identify why it didn’t match.</p>
 </div>
 <div id="add-invited-sequences" class="section level2">
@@ -162,7 +162,9 @@ invited_bc &lt;-<span class="st"> </span><span class="kw">read.delim</span>(<spa
 <p>This function will generate a new table of counts, where similar sequences are pooled together under one unique barcode sequence.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">poolBC</span>(<span class="dt">sampname =</span> sampname,
         <span class="dt">dir =</span> <span class="kw">getwd</span>(),
-        <span class="dt">dl =</span> dl)</code></pre></div>
+        <span class="dt">dl =</span> dl)
+
+<span class="kw">poolingStatsPlot</span>(<span class="dt">dir =</span> <span class="kw">getwd</span>()) <span class="co"># export plots</span></code></pre></div>
 </div>
 <div id="merge-data" class="section level2">
 <h2>5. Merge data</h2>
