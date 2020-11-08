@@ -30,3 +30,8 @@ BC32 barcode processing changelog
 
 - added cleancol parameter to function mergeSummaries
 - added statistics report for the step of barcode pooling
+
+21.10.2020 version 0.7
+----------------------
+
+- bug fix. Subsetting sequences with matching object. Accounting for below 0 match start and above 90 match end. (indels on flanks)
