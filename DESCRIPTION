@@ -1,7 +1,7 @@
 Package: BC32BarSeq
 Type: Package
 Title: Set of functions to process and analyze a BC32 sequencing run
-Version: 0.6.0
+Version: 0.7.1
 Author: Vincent Roh
 Maintainer: Vincent Roh <roh.vincent@gmail.com>
 Description: This package processes a BC32 sequencing run

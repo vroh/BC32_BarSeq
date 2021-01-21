@@ -79,26 +79,26 @@ generateSummaries <- function(pat,
     barcodes_fixed <- NULL
     if(any(as.data.frame(match)[,3]==0)) {
       to_fix <- (1:length(match))[as.data.frame(match)[,3]==0]
-      for(i in 1:length(to_fix)) {
+      for(j in 1:length(to_fix)) {
 
-        seq <- sequences_sub[[to_fix[i]]][IRanges(start=1, end=as.data.frame(match)[to_fix[i],4], width=(as.data.frame(match)[to_fix[i],5]-1))] # change match start from 0 to 1, adjust lenght
+        seq <- sequences_sub[[to_fix[j]]][IRanges(start=1, end=as.data.frame(match)[to_fix[j],4], width=(as.data.frame(match)[to_fix[j],5]-1))] # change match start from 0 to 1, adjust lenght
         barcodes_fixed <- c(barcodes_fixed, seq)
-        sequences_sub <- sequences_sub[-to_fix]
-        match <- match[-to_fix]
 
       }
+      sequences_sub <- sequences_sub[-to_fix]
+      match <- match[-to_fix]
     }
 
     if(any(as.data.frame(match)[,4]==91)) {
       to_fix <- (1:length(match))[as.data.frame(match)[,4]==91]
-      for(i in 1:length(to_fix)) {
+      for(k in 1:length(to_fix)) {
 
-        seq <- sequences_sub[[to_fix[i]]][IRanges(start=as.data.frame(match)[to_fix[i],3], end=90, width=(as.data.frame(match)[to_fix[i],5]-1))] # change match end from 91 to 90, adjust lenght
+        seq <- sequences_sub[[to_fix[k]]][IRanges(start=as.data.frame(match)[to_fix[k],3], end=90, width=(as.data.frame(match)[to_fix[k],5]-1))] # change match end from 91 to 90, adjust lenght
         barcodes_fixed <- c(barcodes_fixed, seq)
-        sequences_sub <- sequences_sub[-to_fix]
-        match <- match[-to_fix]
 
       }
+      sequences_sub <- sequences_sub[-to_fix]
+      match <- match[-to_fix]
     }
     # subset barcodes
     barcodes <- sequences_sub[match]

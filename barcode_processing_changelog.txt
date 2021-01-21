@@ -35,3 +35,8 @@ BC32 barcode processing changelog
 ----------------------
 
 - bug fix. Subsetting sequences with matching object. Accounting for below 0 match start and above 90 match end. (indels on flanks)
+
+21.01.2020 version 0.7.1
+------------------------
+
+- bug fix on version 0.7
